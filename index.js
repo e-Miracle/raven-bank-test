@@ -1,7 +1,8 @@
 const express = require("express");
 const app = express();
 const port = process.env.PORT || 3000;
-const authenticaitonRoutes = require("./routes/authentication.js")
+const authenticaitonRoutes = require("./routes/authentication.js");
+const raveRoutes = require("./routes/raven.js");
 require('dotenv').config();
 
 app.use(express.json());
@@ -15,6 +16,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/auth", authenticaitonRoutes);
+app.use("/raven", raveRoutes);
 
 /* Error handler middleware */
 app.use((err, req, res, next) => {

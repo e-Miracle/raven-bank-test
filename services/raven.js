@@ -108,7 +108,24 @@ async function makeTransfer(reference, amount, bank_code, bank_name, account_num
 
 async function transferWebhook(data) {
     //store data
-    console.log(data);
+    return db('transfers').select("*").where({reference: data.merchant_ref})
+    .then(res=>{
+      if (res[0].status ==0 ) {
+        return db('transfers').where({reference: data.merchant_ref}).update({status: 1})
+        .then(r=>{
+          //notify user
+          return true;
+        }).catch(e=>{
+          console.log(e);
+          return false;
+        })
+      } else {
+        return false;
+      }
+    }).catch(e=>{
+      console.log(e)
+      return false;
+    })
 }
 
 async function collectionWebhook(data) {

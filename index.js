@@ -40,6 +40,8 @@ app.post('/raven/webhook', async (req, res, next)=>{
   try {
       switch (req.body.type) {
           case "transfer":
+              //store
+              await paymentService.storeExternal(req.body);
               //change status
               await ravenService.transferWebhook(req.body);
               break;

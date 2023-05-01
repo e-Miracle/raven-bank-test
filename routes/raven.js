@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const ravenService = require('../services/raven.js');
 const paymentService = require('../services/payment_history.js');
+const db = require('../data/db.js');
 
 router.get('/banks', async function(req, res, next) {
     const i = await ravenService.getBankList();
@@ -35,33 +36,46 @@ router.get('/lookup', async (req, res, next)=>{
 router.post('/transfer', async (req, res, next)=>{
     let {amount, bank_code, bank_name, account_number, account_name, narration, currency} = req.body;
     /**
-     * confirm user balance, generate reference and process transfer and store the 
+     * confirm user balance, generate reference, process transfer and store the 
      */
-    let reference = paymentService.storeInternal()
-    const i = await ravenService.makeTransfer()
+    return db('account_details').select("id", "balance").where({id:req.user.id})
+    .then(r=>{
+        return db('account_details').where({id:req.user.id}).update({balance: Number(r[0].balance) - Number(amount)})
+        .then(async r=>{
+            let reference = await paymentService.storeTransfer(req.user, amount, bank_code, bank_name, account_number, account_name, narration, currency)
+            try {
+                const i = await ravenService.makeTransfer(
+                    reference,
+                    amount, 
+                    bank_code, 
+                    bank_name, 
+                    account_number, 
+                    account_name, 
+                    narration, 
+                    currency
+                )
+                if (i) {
+                    res.status(200).send({
+                        message: "transfer successfully"
+                    });
+                } else {
+                    res.status(500).send({
+                        message: "Insufficient funds"
+                    });
+                }
+            } catch (error) {
+                res.status(500).send({
+                    message: error.message
+                });
+            }
+        }).catch(e=>{
+            console.log(e);
+            return false;
+        })
+    }).catch(err=>{
+        console.log(err);
+        return false;
+    })
 });
 
-router.post('/webhook', async (req, res, next)=>{
-    try {
-        switch (req.body.type) {
-            case "transfer":
-                //change status
-                await ravenService.transferWebhook(req.body);
-                break;
-        
-            case "collection":
-                //store
-                await paymentService.storeExternal(req.body);
-                //credit user
-                await ravenService.collectionWebhook(req.body);
-            break;
-            default:
-                break;
-        }
-    } catch (error) {
-        
-    } finally{
-        res.status(200).send({});
-    }
-});
 module.exports = router;

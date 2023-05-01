@@ -21,8 +21,18 @@ async function storeExternal(data) {
     })
 }
 
-async function storeInternal(data) {
-    
+async function storeTransfer(user, amount, bank_code, bank_name, account_number, account_name, narration, currency) {
+    let reference = srs({length:12});
+    let d = {
+        user_id:user.id, reference, amount, bank_code, bank_name, account_number, account_name, narration, currency
+    }
+    return await db('transfers')
+    .insert(d).then(res=>{
+        return reference;
+    }).catch(err=>{
+        console.log(err);
+        return false;
+    })
 }
 async function store(data) {
     return await db('payment_history')
@@ -34,5 +44,5 @@ async function store(data) {
         });
 }
 module.exports = {
-    storeExternal, storeInternal
+    storeExternal, storeTransfer
 }

@@ -4,7 +4,7 @@ const raven = require("./raven.js");
 const jwt = require("jsonwebtoken");
 
 async function login(email, password){
-    return await db.from("users").select("email", "password").where("email", "=", email)
+    return await db.from("users").select("id","email", "password").where("email", "=", email)
         .then(async items => {
             if (items != undefined & items.length > 0) {
                 //verify password hash
@@ -12,7 +12,7 @@ async function login(email, password){
                 .then(async res=>{
                     try {
                         return jwt.sign(
-                            { userId: items[0].id, email: email },
+                            { userId: items[0].id, email: items[0].email },
                             process.env.APP_KEY,
                             { expiresIn: "3h" }
                         )

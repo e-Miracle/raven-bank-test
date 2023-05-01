@@ -101,27 +101,21 @@ async function makeTransfer(reference, amount, bank_code, bank_name, account_num
     return response.data;
   })
   .catch(function (error) {
-    console.log(error);
+    //console.log(error);
     return false;
   });
 }
 
 async function transferWebhook(data) {
     //store data
-    //generate reference
-    let reference = srs({length:12});
-    //console.log(reference);
-    return await db('payment_history')
-    .insert({
-
-    });
+    console.log(data);
 }
 
 async function collectionWebhook(data) {
   return db.from('account_details').select("id","user_id", "balance").where('account_number', '=', data.account_number)
     .then(async res=>{
         return await db('account_details').where({id:res[0].id}).update({
-          balance: (res[0].balance) + data.amount
+          balance: Number(res[0].balance) + Number(data.amount)
         }).then(res=>{
           return res;
         }).catch(err=>{

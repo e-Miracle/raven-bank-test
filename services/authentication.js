@@ -30,45 +30,56 @@ async function register(email, password, first_name, last_name, phone){
         .then(async items => {
             if (items === undefined || items.length == 0) {
                 //password hash
-                await bcrypt.hash(password, 10)
+                return await bcrypt.hash(password, 10)
                 .then(async password=>{
                     //get an account number
-                    await raven.generateAccountNumber(email, first_name, last_name, phone)
+                    return await raven.generateAccountNumber(email, first_name, last_name, phone)
                         .then(async accn=>{
                             if (accn) {
-                                var sql = `INSERT INTO users (email, password, first_name, last_name, phone) VALUES (?, ?, ?, ?, ?) RETURNING * `; 
-                                await db
-                                .raw(sql, [
+                                return await db('users')
+                                .insert({
                                     email, password, first_name, last_name, phone
-                                ])
+                                })
                                 .then(async item=>{
-                                    console.log(item);
                                     //create account details
                                     let main_details = accn.data
-                                    let details = await db('account_details')
+                                    return await db('account_details')
                                     .insert({
                                         user_id: item[0],
                                         account_number: main_details.account_number,
                                         account_name: main_details.account_name,
                                         bank: main_details.bank,
+                                    }).then(_=>{
+                                        return {
+                                            user: {email, password, first_name, last_name, phone},
+                                            account_details: main_details
+                                        };
+                                    }).catch(e=>{
+                                        console.log(e, 1);
+                                        return false;
                                     })
-    
-                                    return {
-                                        user: item,
-                                        account_details: details
-                                    }
                                 }).catch(err=>{
-                                    console.log(err);
+                                    console.log(err, 2);
                                     return false;
                                 })
+                            }else{
+                                console.log("An error occurred");
+                                return false;
                             }
+                        }).catch(e=>{
+                            console.log(e ,3)
+                            return false;
                         })
+                }).catch(e=>{
+                    console.log(e, 4)
+                    return false;
                 })
+            }else{
+                console.log("user exists")
+                return false;
             }
-
-            return false;
         }).catch(err=>{
-            console.log(err);
+            console.log(err, 5);
             return false;
         })
 }

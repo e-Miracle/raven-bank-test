@@ -14,7 +14,8 @@ router.post('/login', async function(req, res, next) {
 router.post('/register', async function(req, res, next) {
     let { email, password, first_name, last_name, phone } = req.body;
     try {
-        const r = await authenticationService.register(email, password, first_name, last_name, phone)
+        let r = await authenticationService.register(email, password, first_name, last_name, phone)
+        //console.log(r)
         if (r) {
             res.status(201).send({
                 message: "user created successfully",

@@ -5,10 +5,17 @@ const authenticationService = require('../services/authentication.js')
 /* GET programming languages. */
 router.post('/login', async function(req, res, next) {
     let { email, password } = req.body;
-    await authenticationService.login(email, password)
-    .then(res=>{
-        console.log(res);
-    })
+    r = await authenticationService.login(email, password);
+    if (r) {
+        res.status(200).send({
+            message: "login successfully",
+            data: r
+        })
+    }else{
+        res.status(500).send({
+            message: "An error occurred"
+        });
+    }
 });
 
 router.post('/register', async function(req, res, next) {

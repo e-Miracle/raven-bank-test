@@ -1,27 +1,36 @@
 const db = require('../data/db.js');
 const bcrypt = require("bcrypt") 
 const raven = require("./raven.js");
+const jwt = require("jsonwebtoken");
 
 async function login(email, password){
-    await db.from("users").where("email", "=", email)
+    return await db.from("users").select("email", "password").where("email", "=", email)
         .then(async items => {
-            if (items.rowCount != undefined & items.rowCount > 0) {
+            if (items != undefined & items.length > 0) {
                 //verify password hash
-                await bcrypt.compare(password, items[0].password)
+                return await bcrypt.compare(password, items[0].password)
                 .then(async res=>{
-                    jwt.sign(
-                        { userId: items[0].id, email: email },
-                        process.env.APP_KEY,
-                        { expiresIn: "1h" }
-                    ).then(res=>{
-                        return res
-                    })
+                    try {
+                        return jwt.sign(
+                            { userId: items[0].id, email: email },
+                            process.env.APP_KEY,
+                            { expiresIn: "3h" }
+                        )
+                    } catch (error) {
+                        console.log(error)
+                        return false;
+                    }
                 }).catch(err=>{
-                    return {}
+                    console.log(err);
+                    return false;
                 })
             }else{
-                return {}       
+                console.log("user do not exist");
+                return false       
             }
+        }).catch(e=>{
+            console.log(e);
+            return false;
         })
 }
 

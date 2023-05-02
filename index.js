@@ -3,6 +3,7 @@ const app = express();
 const port = process.env.PORT || 3000;
 const authenticaitonRoutes = require("./routes/authentication.js");
 const raveRoutes = require("./routes/raven.js");
+const historyRoutes = require("./routes/history.js");
 const jwt = require("jsonwebtoken");
 const paymentService = require('./services/payment_history.js');
 const ravenService = require('./services/raven.js');
@@ -41,7 +42,7 @@ app.post('/raven/webhook', async (req, res, next)=>{
       switch (req.body.type) {
           case "transfer":
               //store
-              await paymentService.storeExternal(req.body);
+              await paymentService.storeExternalTransfer(req.body);
               //change status
               await ravenService.transferWebhook(req.body);
               break;
@@ -64,6 +65,7 @@ app.post('/raven/webhook', async (req, res, next)=>{
 
 app.use("/auth", authenticaitonRoutes);
 app.use("/my/raven", raveRoutes);
+app.use("/my/history", historyRoutes);
 
 /* Error handler middleware */
 app.use((err, req, res, next) => {
